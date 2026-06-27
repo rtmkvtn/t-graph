@@ -24,7 +24,7 @@ const cpa: Series = {
 const roi: Series = {
   name: 'ROI confirmed',
   type: 'spline',
-  color: '#2B7A4B',
+  color: '#2BA02B',
   data: points([610.78, 180.5, 161.47, 56.33]),
   yAxis: { format: 'percent' },
 }

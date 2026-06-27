@@ -22,10 +22,17 @@ const TYPE_TABLE: Record<ChartType, TypeTranslation> = {
   line: {
     apexType: 'line',
     curve: 'straight',
-    markerSize: 6,
+    markerSize: 5,
     markerShape: 'square',
   },
   bar: { apexType: 'column', markerSize: 0 },
+}
+
+const strokeWidthFor = (type: ChartType): number => {
+  if (type === 'area') return 2
+  if (type === 'spline') return 4
+  if (type === 'line') return 2
+  return 0
 }
 
 const formatValue = (value: number, format: YAxisFormat): string => {
@@ -79,9 +86,7 @@ export function MetricsChart({ series, height = 360 }: MetricsChartProps) {
       },
       stroke: {
         curve: series.map((s) => TYPE_TABLE[s.type].curve ?? 'straight'),
-        width: series.map((s) =>
-          TYPE_TABLE[s.type].apexType === 'area' ? 2 : 3
-        ),
+        width: series.map((s) => strokeWidthFor(s.type)),
       },
       fill: {
         type: series.map((s) =>
@@ -100,8 +105,8 @@ export function MetricsChart({ series, height = 360 }: MetricsChartProps) {
       },
       plotOptions: {
         bar: {
-          columnWidth: '18%',
-          borderRadius: 2,
+          columnWidth: '60%',
+          borderRadius: 4,
         },
       },
       xaxis: {
@@ -112,7 +117,17 @@ export function MetricsChart({ series, height = 360 }: MetricsChartProps) {
       legend: { show: false },
       dataLabels: { enabled: false },
       grid: { borderColor: '#eef0f2' },
-      tooltip: { shared: true, intersect: false },
+      tooltip: {
+        shared: true,
+        intersect: false,
+        x: { format: 'dd.MM.yyyy' },
+        y: {
+          formatter: (value, opts) => {
+            const s = series[opts.seriesIndex]
+            return formatValue(value, s.yAxis.format)
+          },
+        },
+      },
     }
 
     return { apexSeries, options }
