@@ -37,13 +37,18 @@ const formatValue = (value: number, format: YAxisFormat): string => {
 }
 
 const buildYAxis = (series: Series[]): ApexOptions['yaxis'] => {
-  const seenFormats = new Set<YAxisFormat>()
+  const firstOfFormat = new Map<YAxisFormat, string>()
+  for (const s of series) {
+    if (!firstOfFormat.has(s.yAxis.format)) {
+      firstOfFormat.set(s.yAxis.format, s.name)
+    }
+  }
   return series.map((s) => {
-    const firstOfFormat = !seenFormats.has(s.yAxis.format)
-    seenFormats.add(s.yAxis.format)
-    const show = s.yAxis.show ?? firstOfFormat
+    const owner = firstOfFormat.get(s.yAxis.format)!
+    const isOwner = owner === s.name
+    const show = s.yAxis.show ?? isOwner
     return {
-      seriesName: s.name,
+      seriesName: owner,
       show,
       opposite: s.yAxis.opposite ?? false,
       labels: {
@@ -92,6 +97,12 @@ export function MetricsChart({ series, height = 360 }: MetricsChartProps) {
           (s) => TYPE_TABLE[s.type].markerShape ?? 'circle'
         ) as never,
         strokeWidth: 0,
+      },
+      plotOptions: {
+        bar: {
+          columnWidth: '18%',
+          borderRadius: 2,
+        },
       },
       xaxis: {
         type: 'datetime',
