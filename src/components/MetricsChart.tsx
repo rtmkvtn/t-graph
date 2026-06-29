@@ -31,25 +31,6 @@ const toSeries = (
   yAxis: { format: input.format },
 })
 
-const assertSharedDates = (
-  reference: ChartSeriesInput,
-  series: ChartSeriesInput,
-  slot: string
-) => {
-  if (series.data.length !== reference.data.length) {
-    throw new Error(
-      `MetricsChart: all series must share the same dates. "${series.label}" (${slot}) has ${series.data.length} points, expected ${reference.data.length} (matching "${reference.label}")`
-    )
-  }
-  for (let i = 0; i < reference.data.length; i++) {
-    if (series.data[i].date !== reference.data[i].date) {
-      throw new Error(
-        `MetricsChart: all series must share the same dates. "${series.label}" (${slot}) has "${series.data[i].date}" at index ${i}, expected "${reference.data[i].date}" (matching "${reference.label}")`
-      )
-    }
-  }
-}
-
 export function MetricsChart({
   area,
   bar,
@@ -58,10 +39,6 @@ export function MetricsChart({
   height = 360,
 }: MetricsChartProps) {
   const { apexSeries, options } = useMemo(() => {
-    assertSharedDates(area, bar, 'bar')
-    assertSharedDates(area, spline, 'spline')
-    assertSharedDates(area, line, 'line')
-
     const series: Series[] = [
       toSeries(area, 'area', 0),
       toSeries(bar, 'bar', 1),

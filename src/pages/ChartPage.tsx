@@ -1,3 +1,4 @@
+import { DataErrorPanel } from '../components/DataErrorPanel'
 import { MetricsChart } from '../components/MetricsChart'
 import {
   conversionsSeries,
@@ -5,6 +6,7 @@ import {
   cpaSeries,
   roiSeries,
 } from '../lib/sampleData'
+import { validateChartInputs } from '../lib/validateChartInputs'
 
 const cardStyle = {
   width: 'min(900px, 100%)',
@@ -16,6 +18,15 @@ const cardStyle = {
 } as const
 
 export function ChartPage() {
+  const result = validateChartInputs(
+    costSeries,
+    cpaSeries,
+    roiSeries,
+    conversionsSeries
+  )
+
+  if (!result.ok) return <DataErrorPanel error={result} />
+
   return (
     <div style={cardStyle}>
       <MetricsChart
