@@ -41,15 +41,12 @@ const buildYAxis = (series: Series[]): ApexOptions['yaxis'] => {
   }
   return series.map((s) => {
     const owner = firstOfFormat.get(s.yAxis.format)!
-    const isOwner = owner === s.name
-    const show = s.yAxis.show ?? isOwner
     return {
       seriesName: owner,
-      show,
+      show: false,
       opposite: s.yAxis.opposite ?? false,
       labels: {
         formatter: (value: number) => formatValue(value, s.yAxis.format),
-        style: { colors: '#6b7280' },
       },
       axisBorder: { show: false },
       axisTicks: { show: false },

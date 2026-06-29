@@ -26,3 +26,8 @@ body {
 .apexcharts-tooltip-marker {
   border-radius: 50% !important;
 }
+
+.apexcharts-canvas,
+.apexcharts-canvas * {
+  cursor: pointer;
+}
