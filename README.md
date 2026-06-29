@@ -18,29 +18,34 @@ Open the URL Vite prints (defaults to <http://localhost:5173/>). You should see 
 
 ## Use your own data
 
-The chart reads its data from `src/sampleData.ts`. Replace the four series there with your own — the shape is:
+The chart reads its data from `src/lib/sampleData.ts`. Edit the single `sampleDataset` const — `dates` once at the top, then per-series `name/type/color/format/values`:
 
 ```ts
-import type { Series } from './types'
+import type { RawDataset } from './types'
 
-const mySeries: Series[] = [
-  {
-    name: 'Revenue',
-    type: 'area', // 'area' | 'spline' | 'line' | 'bar'
-    color: '#F4D35E',
-    data: [
-      { x: '2026-06-10', y: 1240 },
-      { x: '2026-06-11', y: 1580 },
-      { x: '2026-06-12', y: 2100 },
-      { x: '2026-06-13', y: 2450 },
-    ],
-    yAxis: { format: 'currency' }, // 'currency' | 'percent' | 'number'
-  },
-  // ... three more series
-]
+export const sampleDataset: RawDataset = {
+  dates: ['2026-06-10', '2026-06-11', '2026-06-12', '2026-06-13'],
+  series: [
+    {
+      name: 'Revenue',
+      type: 'area', // 'area' | 'spline' | 'line' | 'bar'
+      color: '#F4D35E', // optional — falls back to a palette
+      format: 'currency', // 'currency' | 'percent' | 'number'
+      values: [1240, 1580, 2100, 2450],
+    },
+    // ... more series
+  ],
+}
 ```
 
-Then pass them to `<MetricsChart series={mySeries} />` in `src/App.tsx`. Four series is the test's expected shape but the component does not enforce a count.
+`parseDataset` (in `src/lib/parseDataset.ts`) turns this into the chart-internal `Series[]` and the result is exported as `sampleSeries`, which `ChartPage` passes to `<MetricsChart />`. No other wiring needed.
+
+Rules the parser enforces:
+
+- `values.length` must not exceed `dates.length` — the parser throws naming the offending series
+- Fewer values than dates is valid (sparse data, fewer points rendered)
+- `color` is optional; empty / missing / whitespace falls back to a 6-color palette indexed by series position
+- Four series is the test's expected shape but neither the parser nor the component enforces a count
 
 ### The four `type` values
 
@@ -51,7 +56,7 @@ Then pass them to `<MetricsChart series={mySeries} />` in `src/App.tsx`. Four se
 | `line`   | Straight segments with **square** markers at each data point |
 | `bar`    | Vertical bars at the data point's X position                 |
 
-### The `yAxis.format` values
+### The `format` values
 
 | `format`   | Output    |
 | ---------- | --------- |
@@ -59,7 +64,7 @@ Then pass them to `<MetricsChart series={mySeries} />` in `src/App.tsx`. Four se
 | `percent`  | `161.47%` |
 | `number`   | `36`      |
 
-Sibling series sharing a `format` share a Y-axis scale; only the first-of-format series renders the axis labels by default. Override with `yAxis.show` / `yAxis.opposite` per series.
+Sibling series sharing a `format` share a Y-axis scale; only the first-of-format series renders the axis labels.
 
 ## Scripts
 
@@ -77,12 +82,22 @@ Husky pre-commit runs lint-staged: `eslint --fix` + `prettier --write` on staged
 
 ```
 src/
-├── App.tsx           # demo page wiring MetricsChart with sampleData
-├── MetricsChart.tsx  # the chart component (public surface)
-├── types.ts          # Series, ChartType, MetricsChartProps, etc.
-├── sampleData.ts     # four demo series matching the reference
-├── main.tsx          # Vite entry
-└── index.css         # ambient page styles
+├── main.tsx                  # Vite entry; wraps App in BrowserRouter
+├── App.tsx                   # routes — ChartPage at /, NotFound elsewhere
+├── index.css                 # ambient page styles
+├── pages/
+│   ├── ChartPage.tsx         # wires MetricsChart with sampleSeries
+│   └── NotFound.tsx          # 404
+├── components/
+│   └── MetricsChart.tsx      # the chart component (public surface)
+├── helpers/
+│   ├── format.ts             # y-axis and tooltip value formatters
+│   └── halos.ts              # imperative SVG hover halos (line/spline only)
+└── lib/
+    ├── types.ts              # Series, RawDataset, ChartType, etc.
+    ├── sampleData.ts         # raw sampleDataset + parsed sampleSeries
+    ├── parseDataset.ts       # RawDataset → Series[] with color/length guards
+    └── apexOptions.ts        # buildChartOptions, TYPE_TABLE, buildYAxis
 ```
 
 Domain glossary lives in `CONTEXT.md`. Architectural decisions in `docs/adr/`.

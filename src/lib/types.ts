@@ -23,3 +23,16 @@ export type MetricsChartProps = {
   series: Series[]
   height?: number
 }
+
+export type RawSeries = {
+  name: string
+  type: ChartType
+  color?: string
+  format: YAxisFormat
+  values: number[]
+}
+
+export type RawDataset = {
+  dates: string[]
+  series: RawSeries[]
+}
