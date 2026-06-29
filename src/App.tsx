@@ -1,7 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 
-import { ChartPage } from './ChartPage'
-import { NotFound } from './NotFound'
+import { ChartPage } from './pages/ChartPage'
+import { NotFound } from './pages/NotFound'
 
 export default function App() {
   return (

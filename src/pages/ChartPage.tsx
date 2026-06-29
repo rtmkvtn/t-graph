@@ -1,5 +1,5 @@
-import { MetricsChart } from './MetricsChart'
-import { sampleSeries } from './sampleData'
+import { MetricsChart } from '../components/MetricsChart'
+import { sampleSeries } from '../lib/sampleData'
 
 const cardStyle = {
   width: 'min(900px, 100%)',
