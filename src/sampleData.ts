@@ -32,7 +32,7 @@ const roi: Series = {
 const conversions: Series = {
   name: 'Conversions',
   type: 'line',
-  color: '#C2356F',
+  color: '#C026D3',
   data: points([3, 30, 36, 70]),
   yAxis: { format: 'number' },
 }

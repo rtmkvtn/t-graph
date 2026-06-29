@@ -29,7 +29,6 @@ const TYPE_TABLE: Record<ChartType, TypeTranslation> = {
 }
 
 const strokeWidthFor = (type: ChartType): number => {
-  if (type === 'area') return 2
   if (type === 'spline') return 4
   if (type === 'line') return 2
   return 0
@@ -41,6 +40,11 @@ const formatValue = (value: number, format: YAxisFormat): string => {
   if (format === 'currency') return `$${body}`
   if (format === 'percent') return `${body}%`
   return body
+}
+
+const formatTooltipValue = (value: number): string => {
+  const isInt = Number.isInteger(value)
+  return isInt ? `${value}` : value.toFixed(2)
 }
 
 const buildYAxis = (series: Series[]): ApexOptions['yaxis'] => {
@@ -68,6 +72,68 @@ const buildYAxis = (series: Series[]): ApexOptions['yaxis'] => {
   })
 }
 
+const HALO_RADIUS = 14
+const HALO_OPACITY = 0.25
+const HALO_LAYER_CLASS = 'apexcharts-custom-halo-layer'
+
+type ChartCtx = {
+  el: HTMLElement
+  w: {
+    globals: {
+      seriesYvalues: Array<Array<number | null> | null>
+      gridWidth: number
+    }
+  }
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg'
+
+const renderHalos = (
+  ctx: ChartCtx,
+  dataPointIndex: number,
+  seriesColors: Array<string | null>
+) => {
+  const inner = ctx.el.querySelector('.apexcharts-inner') as SVGGElement | null
+  if (!inner) return
+  let layer = inner.querySelector(`.${HALO_LAYER_CLASS}`) as SVGGElement | null
+  if (!layer) {
+    layer = document.createElementNS(SVG_NS, 'g')
+    layer.setAttribute('class', HALO_LAYER_CLASS)
+    layer.setAttribute('pointer-events', 'none')
+    inner.appendChild(layer)
+  }
+  while (layer.firstChild) layer.removeChild(layer.firstChild)
+  if (dataPointIndex < 0) return
+
+  const ys = ctx.w.globals.seriesYvalues
+  if (!ys?.length) return
+
+  const pointCount = ys[0]?.length ?? 0
+  if (pointCount === 0 || dataPointIndex >= pointCount) return
+
+  const stepX = pointCount > 1 ? ctx.w.globals.gridWidth / (pointCount - 1) : 0
+  const cx = dataPointIndex * stepX
+
+  ys.forEach((yArr, sIdx) => {
+    const cy = yArr?.[dataPointIndex]
+    if (cy == null) return
+    const color = seriesColors[sIdx]
+    if (!color) return
+    const circle = document.createElementNS(SVG_NS, 'circle')
+    circle.setAttribute('cx', `${cx}`)
+    circle.setAttribute('cy', `${cy}`)
+    circle.setAttribute('r', `${HALO_RADIUS}`)
+    circle.setAttribute('fill', color)
+    circle.setAttribute('fill-opacity', `${HALO_OPACITY}`)
+    layer!.appendChild(circle)
+  })
+}
+
+const clearHalos = (ctx: ChartCtx) => {
+  const layer = ctx.el.querySelector(`.${HALO_LAYER_CLASS}`)
+  if (layer) layer.remove()
+}
+
 export function MetricsChart({ series, height = 360 }: MetricsChartProps) {
   const { apexSeries, options } = useMemo(() => {
     const apexSeries = series.map((s) => ({
@@ -77,12 +143,28 @@ export function MetricsChart({ series, height = 360 }: MetricsChartProps) {
       color: s.color,
     }))
 
+    const haloColors = series.map((s) =>
+      s.type === 'area' || s.type === 'bar' ? null : (s.color ?? '#000')
+    )
+
     const options: ApexOptions = {
       chart: {
         type: 'line',
         toolbar: { show: false },
         zoom: { enabled: false },
         animations: { enabled: true },
+        events: {
+          mouseMove: (_event, ctx, opts) => {
+            renderHalos(
+              ctx as unknown as ChartCtx,
+              opts.dataPointIndex,
+              haloColors
+            )
+          },
+          mouseLeave: (_event, ctx) => {
+            clearHalos(ctx as unknown as ChartCtx)
+          },
+        },
       },
       stroke: {
         curve: series.map((s) => TYPE_TABLE[s.type].curve ?? 'straight'),
@@ -112,6 +194,7 @@ export function MetricsChart({ series, height = 360 }: MetricsChartProps) {
       xaxis: {
         type: 'datetime',
         labels: { datetimeUTC: false },
+        tooltip: { enabled: false },
       },
       yaxis: buildYAxis(series),
       legend: { show: false },
@@ -122,10 +205,7 @@ export function MetricsChart({ series, height = 360 }: MetricsChartProps) {
         intersect: false,
         x: { format: 'dd.MM.yyyy' },
         y: {
-          formatter: (value, opts) => {
-            const s = series[opts.seriesIndex]
-            return formatValue(value, s.yAxis.format)
-          },
+          formatter: (value) => formatTooltipValue(value),
         },
       },
     }
