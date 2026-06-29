@@ -68,7 +68,8 @@ export type BuiltChartOptions = {
 
 export const buildChartOptions = (
   series: Series[],
-  haloColors: Array<string | null>
+  haloColors: Array<string | null>,
+  innerMarkerColors: Array<string | null>
 ): BuiltChartOptions => {
   const apexSeries: ApexSeries[] = series.map((s) => ({
     name: s.name,
@@ -88,7 +89,8 @@ export const buildChartOptions = (
           renderHalos(
             ctx as unknown as ChartCtx,
             opts.dataPointIndex,
-            haloColors
+            haloColors,
+            innerMarkerColors
           )
         },
         mouseLeave: (_event, ctx) => {
@@ -118,6 +120,10 @@ export const buildChartOptions = (
         columnWidth: '60%',
         borderRadius: 4,
       },
+    },
+    states: {
+      hover: { filter: { type: 'none' } },
+      active: { filter: { type: 'none' } },
     },
     xaxis: {
       type: 'datetime',

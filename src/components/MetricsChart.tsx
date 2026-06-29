@@ -10,7 +10,10 @@ export function MetricsChart({ series, height = 360 }: MetricsChartProps) {
     const haloColors = series.map((s) =>
       s.type === 'area' || s.type === 'bar' ? null : (s.color ?? '#000')
     )
-    return buildChartOptions(series, haloColors)
+    const innerMarkerColors = series.map((s) =>
+      s.type === 'spline' ? (s.color ?? '#000') : null
+    )
+    return buildChartOptions(series, haloColors, innerMarkerColors)
   }, [series])
 
   return (
