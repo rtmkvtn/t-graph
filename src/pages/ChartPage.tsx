@@ -1,5 +1,10 @@
 import { MetricsChart } from '../components/MetricsChart'
-import { sampleSeries } from '../lib/sampleData'
+import {
+  conversionsSeries,
+  costSeries,
+  cpaSeries,
+  roiSeries,
+} from '../lib/sampleData'
 
 const cardStyle = {
   width: 'min(900px, 100%)',
@@ -13,7 +18,12 @@ const cardStyle = {
 export function ChartPage() {
   return (
     <div style={cardStyle}>
-      <MetricsChart series={sampleSeries} />
+      <MetricsChart
+        area={costSeries}
+        bar={cpaSeries}
+        spline={roiSeries}
+        line={conversionsSeries}
+      />
     </div>
   )
 }

@@ -18,53 +18,55 @@ Open the URL Vite prints (defaults to <http://localhost:5173/>). You should see 
 
 ## Use your own data
 
-The chart reads its data from `src/lib/sampleData.ts`. Edit the single `sampleDataset` const — `dates` once at the top, then per-series `name/type/color/format/values`:
+`<MetricsChart />` takes four dedicated props — one per render type. Each prop accepts a `ChartSeriesInput`: a `label`, a `format`, an optional `color`, and a plain `data` array of `{ date, value }` points.
 
-```ts
-import type { RawDataset } from './types'
+```tsx
+import { MetricsChart } from './components/MetricsChart'
+import type { ChartSeriesInput } from './lib/types'
 
-export const sampleDataset: RawDataset = {
-  dates: ['2026-06-10', '2026-06-11', '2026-06-12', '2026-06-13'],
-  series: [
-    {
-      name: 'Revenue',
-      type: 'area', // 'area' | 'spline' | 'line' | 'bar'
-      color: '#F4D35E', // optional — falls back to a palette
-      format: 'currency', // 'currency' | 'percent' | 'number'
-      values: [1240, 1580, 2100, 2450],
-    },
-    // ... more series
+const revenue: ChartSeriesInput = {
+  label: 'Revenue',
+  format: 'currency', // 'currency' | 'percent' | 'number'
+  color: '#F4D35E', // optional — falls back to a palette
+  data: [
+    { date: '2026-06-10', value: 1240 },
+    { date: '2026-06-11', value: 1580 },
+    { date: '2026-06-12', value: 2100 },
+    { date: '2026-06-13', value: 2450 },
   ],
 }
+
+// ... three more inputs of the same shape
+
+;<MetricsChart area={revenue} bar={cpa} spline={roi} line={conversions} />
 ```
 
-`parseDataset` (in `src/lib/parseDataset.ts`) turns this into the chart-internal `Series[]` and the result is exported as `sampleSeries`, which `ChartPage` passes to `<MetricsChart />`. No other wiring needed.
+The bundled sample data lives in `src/lib/sampleData.ts` as four named exports — `costSeries`, `cpaSeries`, `roiSeries`, `conversionsSeries`. Edit those, or drop your own `ChartSeriesInput` consts in `ChartPage.tsx`.
 
-Rules the parser enforces:
+Notes:
 
-- `values.length` must not exceed `dates.length` — the parser throws naming the offending series
-- Fewer values than dates is valid (sparse data, fewer points rendered)
-- `color` is optional; empty / missing / whitespace falls back to a 6-color palette indexed by series position
-- Four series is the test's expected shape but neither the parser nor the component enforces a count
+- All four series must use the **same dates in the same order** — the current implementation enforces this at runtime and throws a descriptive error naming the offending series if they diverge. Mismatched dates aren't supported today: ApexCharts' shared tooltip falls apart in mixed-x mode and the custom halo positioning assumes a unified point index. (Lifting this constraint would mean a custom tooltip + reworked halo math — out of scope for now.)
+- `color` is optional; empty / missing / whitespace falls back to a 6-colour palette indexed by series position.
+- All four props (`area`, `bar`, `spline`, `line`) are required — the brief calls for exactly four series, one per render type.
 
-### The four `type` values
+### The four render slots
 
-| `type`   | Rendering                                                    |
+| Prop     | Rendering                                                    |
 | -------- | ------------------------------------------------------------ |
 | `area`   | Filled area with a smooth top edge                           |
-| `spline` | Smooth curve, no fill, no markers                            |
+| `spline` | Smooth curve, no fill, no static markers                     |
 | `line`   | Straight segments with **square** markers at each data point |
 | `bar`    | Vertical bars at the data point's X position                 |
 
 ### The `format` values
 
-| `format`   | Output    |
-| ---------- | --------- |
-| `currency` | `$44.36`  |
-| `percent`  | `161.47%` |
-| `number`   | `36`      |
+| `format`   | Tooltip output |
+| ---------- | -------------- |
+| `currency` | `$44.36`       |
+| `percent`  | `161.47%`      |
+| `number`   | `36`           |
 
-Sibling series sharing a `format` share a Y-axis scale; only the first-of-format series renders the axis labels.
+Sibling series sharing a `format` share a Y-axis scale (axis labels themselves are hidden — see `apexOptions.ts`).
 
 ## Scripts
 
@@ -94,9 +96,8 @@ src/
 │   ├── format.ts             # y-axis and tooltip value formatters
 │   └── halos.ts              # imperative SVG hover halos (line/spline only)
 └── lib/
-    ├── types.ts              # Series, RawDataset, ChartType, etc.
-    ├── sampleData.ts         # raw sampleDataset + parsed sampleSeries
-    ├── parseDataset.ts       # RawDataset → Series[] with color/length guards
+    ├── types.ts              # ChartSeriesInput, Series, ChartType, etc.
+    ├── sampleData.ts         # four ChartSeriesInput consts (cost/cpa/roi/conversions)
     └── apexOptions.ts        # buildChartOptions, TYPE_TABLE, buildYAxis
 ```
 

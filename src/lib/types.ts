@@ -19,20 +19,17 @@ export type Series = {
   }
 }
 
-export type MetricsChartProps = {
-  series: Series[]
-  height?: number
-}
-
-export type RawSeries = {
-  name: string
-  type: ChartType
-  color?: string
+export type ChartSeriesInput = {
+  label: string
   format: YAxisFormat
-  values: number[]
+  color?: string
+  data: Array<{ date: string; value: number }>
 }
 
-export type RawDataset = {
-  dates: string[]
-  series: RawSeries[]
+export type MetricsChartProps = {
+  area: ChartSeriesInput
+  bar: ChartSeriesInput
+  spline: ChartSeriesInput
+  line: ChartSeriesInput
+  height?: number
 }
