@@ -137,6 +137,7 @@ export const buildChartOptions = (
     tooltip: {
       shared: true,
       intersect: false,
+      followCursor: true,
       x: { format: 'dd.MM.yyyy' },
       y: {
         formatter: (value) => formatTooltipValue(value),

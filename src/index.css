@@ -27,9 +27,32 @@ body {
   border-radius: 50% !important;
 }
 
+.apexcharts-tooltip.apexcharts-theme-light,
+.apexcharts-tooltip.apexcharts-theme-dark {
+  opacity: 0;
+  transition:
+    left 250ms ease-out,
+    top 250ms ease-out,
+    transform 250ms ease-out,
+    opacity 200ms ease !important;
+}
+
+.apexcharts-tooltip.apexcharts-active {
+  opacity: 1;
+}
+
 .apexcharts-canvas,
 .apexcharts-canvas * {
   cursor: pointer;
+}
+
+.apexcharts-canvas {
+  border-radius: 4px;
+  transition: background-color 200ms ease;
+}
+
+.apexcharts-canvas:hover {
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .apexcharts-marker {
